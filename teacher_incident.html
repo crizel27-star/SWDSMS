@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SWDSMS | Manage Teachers</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<style>
+/* GENERAL */
+*{box-sizing:border-box;font-family:'Poppins',sans-serif;transition:0.3s;}
+body{margin:0;display:flex;background:#f4f5fb;}
+
+/* SIDEBAR */
+#sidebar{
+  width:250px;
+  background:#ffffff;
+  height:100vh;
+  padding:25px 20px;
+  box-shadow:2px 0 15px rgba(0,0,0,.05);
+  display:flex;
+  flex-direction:column;
+}
+#sidebar h2{color:#6366F1;margin-bottom:40px;font-size:24px;font-weight:600;text-align:center;}
+#sidebar a{display:flex;align-items:center;gap:10px;padding:12px 15px;color:#374151;text-decoration:none;border-radius:10px;margin-bottom:12px;font-size:15px;}
+#sidebar a i{min-width:20px;text-align:center;}
+#sidebar a.active,#sidebar a:hover{background:#6366F1;color:white;}
+
+/* MAIN */
+.main{flex:1;padding:30px 40px;overflow-x:hidden;}
+
+/* TOP BAR */
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:30px;}
+.top h1{font-size:24px;color:#111827;}
+.top button{background:#6366F1;color:white;border:none;padding:10px 18px;border-radius:12px;cursor:pointer;font-weight:500;}
+.top button:hover{background:#4f46e5;}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;margin-bottom:35px;}
+.stat{background:white;padding:25px 20px;border-radius:18px;box-shadow:0 10px 20px rgba(0,0,0,.08);text-align:center;}
+.stat p{margin:0;font-weight:500;color:#4b5563;}
+.stat span{display:block;font-size:32px;font-weight:600;color:#6366F1;margin-top:10px;}
+
+/* TABLE CARD */
+.table-card{background:white;padding:25px 30px;border-radius:20px;box-shadow:0 10px 25px rgba(0,0,0,.08);}
+.table-card h3{margin-top:0;margin-bottom:15px;color:#111827;}
+.table-card input{padding:12px 15px;border-radius:12px;border:1px solid #ddd;margin-bottom:20px;width:100%;max-width:300px;}
+table{width:100%;border-collapse:collapse;}
+th,td{padding:12px 15px;border-bottom:1px solid #e5e7eb;font-size:14px;text-align:left;}
+th{background:#f9fafb;font-weight:600;color:#4b5563;}
+tr:hover{background:#f3f4f6;}
+button.action-btn{padding:6px 10px;margin-right:5px;border:none;border-radius:8px;color:white;cursor:pointer;}
+button.edit{background:#6366F1;}
+button.delete{background:#ef4444;}
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div id="sidebar"></div>
+
+<!-- Main Content -->
+<div class="main">
+  <div class="top">
+    <h1>Manage Teachers</h1>
+    <button onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat"><p>Total Teachers</p><span id="total">0</span></div>
+    <div class="stat"><p>Active</p><span id="active">0</span></div>
+    <div class="stat"><p>Inactive</p><span id="inactive">0</span></div>
+  </div>
+
+  <!-- Teachers Table -->
+  <div class="table-card">
+    <h3>All Teachers</h3>
+    <input type="text" placeholder="Search teacher..." onkeyup="searchTeacher(this.value)">
+
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Grade / Section</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="teacherTable">
+        <!-- rows inserted dynamically -->
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js"></script>
+<script>
+// Sidebar for admin
+let userRole = "admin";
+const sidebarItems = {
+  admin:[
+    {name:"Dashboard", icon:"fa-tachometer-alt", link:"dashboard.html"},
+    {name:"Incident Reports", icon:"fa-file-alt", link:"incidents.html"},
+    {name:"Students", icon:"fa-users", link:"student incident.html"},
+    {name:"Teachers", icon:"fa-chalkboard-teacher", link:"teacher_incident.html", active:true},
+   
+  ]
+};
+
+function renderSidebar(role){
+  const sidebar = document.getElementById("sidebar");
+  sidebar.innerHTML = `<h2>SWDSMS</h2>`;
+  sidebarItems[role].forEach(item=>{
+    const a = document.createElement("a");
+    a.href = item.link ? item.link : "#";
+    a.innerHTML = `<i class="fas ${item.icon}"></i> ${item.name}`;
+    if(item.active) a.classList.add("active");
+    if(item.action === "logout") a.onclick = logout;
+    sidebar.appendChild(a);
+  });
+}
+renderSidebar(userRole);
+
+// Example teacher data
+let teachers = [
+  {name:"Mr. John Doe", email:"john@example.com", grade:"10-A", status:"Active"},
+  {name:"Ms. Jane Smith", email:"jane@example.com", grade:"9-B", status:"Active"},
+  {name:"Mr. Mark Lee", email:"mark@example.com", grade:"10-C", status:"Inactive"}
+];
+
+// Render table and stats
+function renderTeachers(data){
+  const tbody = document.getElementById("teacherTable");
+  tbody.innerHTML = "";
+  let total = data.length;
+  let active = data.filter(t=>t.status==="Active").length;
+  let inactive = data.filter(t=>t.status==="Inactive").length;
+
+  document.getElementById("total").innerText = total;
+  document.getElementById("active").innerText = active;
+  document.getElementById("inactive").innerText = inactive;
+
+  data.forEach(t=>{
+    let tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${t.name}</td>
+      <td>${t.email}</td>
+      <td>${t.grade}</td>
+      <td>${t.status}</td>
+      <td>
+        <button class="action-btn edit" onclick="editTeacher('${t.name}')"><i class="fas fa-edit"></i></button>
+        <button class="action-btn delete" onclick="deleteTeacher('${t.name}')"><i class="fas fa-trash"></i></button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+renderTeachers(teachers);
+
+// Search function
+function searchTeacher(val){
+  val = val.toLowerCase();
+  let filtered = teachers.filter(t=>t.name.toLowerCase().includes(val) || t.grade.toLowerCase().includes(val));
+  renderTeachers(filtered);
+}
+
+// Action examples
+function editTeacher(name){ alert("Edit teacher: "+name); }
+function deleteTeacher(name){ 
+  if(confirm("Are you sure you want to delete "+name+"?")){
+    teachers = teachers.filter(t=>t.name !== name);
+    renderTeachers(teachers);
+  }
+}
+
+// Logout
+function logout(){ alert("Logging out..."); }
+</script>
+
+</body>
+</html>
