@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SWDSMS | Home</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+*{
+  box-sizing:border-box;
+  font-family:'Poppins',sans-serif;
+}
+body{
+  margin:0;
+  background:#f4f5fb;
+  color:#111827;
+}
+
+/* NAVBAR */
+nav{
+  background:white;
+  padding:18px 40px;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  box-shadow:0 5px 20px rgba(0,0,0,.08);
+}
+nav h2{
+  margin:0;
+  color:#6366F1;
+  font-weight:700;
+}
+
+/* HERO */
+.hero{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:80px 40px;
+  max-width:1200px;
+  margin:auto;
+}
+.hero-text{
+  max-width:550px;
+}
+.hero-text h1{
+  font-size:42px;
+  margin-bottom:20px;
+}
+.hero-text p{
+  font-size:16px;
+  color:#374151;
+  margin-bottom:30px;
+}
+.hero-buttons{
+  display:flex;
+  gap:15px;
+}
+.hero-buttons a button{
+  padding:14px 28px;
+  border:none;
+  border-radius:12px;
+  font-size:16px;
+  cursor:pointer;
+}
+.login-btn{
+  background:#e5e7eb;
+}
+.signup-btn{
+  background:#6366F1;
+  color:white;
+}
+.hero-box{
+  background:white;
+  padding:40px;
+  border-radius:20px;
+  box-shadow:0 15px 35px rgba(0,0,0,.1);
+  text-align:center;
+}
+.hero-box h3{
+  margin-bottom:10px;
+  color:#6366F1;
+}
+.hero-box p{
+  font-size:14px;
+  color:#6b7280;
+}
+
+/* SECTIONS */
+section{
+  padding:70px 40px;
+}
+.section-title{
+  text-align:center;
+  margin-bottom:40px;
+}
+.section-title h2{
+  margin-bottom:10px;
+}
+.cards{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+  gap:25px;
+  max-width:1000px;
+  margin:auto;
+}
+.card{
+  background:white;
+  padding:30px;
+  border-radius:18px;
+  box-shadow:0 10px 25px rgba(0,0,0,.08);
+  text-align:center;
+}
+.card h3{
+  color:#6366F1;
+  margin-bottom:10px;
+}
+.card p{
+  font-size:14px;
+  color:#6b7280;
+}
+
+/* FOOTER */
+footer{
+  background:#111827;
+  color:white;
+  padding:25px;
+  text-align:center;
+  font-size:14px;
+}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  .hero{
+    flex-direction:column;
+    gap:40px;
+    text-align:center;
+  }
+  .hero-buttons{
+    justify-content:center;
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav>
+  <h2>SWDSMS</h2>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-text">
+    <h1>Student Welfare & Discipline Monitoring System</h1>
+    <p>
+      A safe and secure platform for reporting incidents,
+      managing student welfare, and promoting a healthy school environment.
+    </p>
+
+    <div class="hero-buttons">
+      <a href="login.html">
+        <button class="login-btn">Login</button>
+      </a>
+      <a href="signup.html">
+        <button class="signup-btn">Sign Up</button>
+      </a>
+    </div>
+  </div>
+
+  <div class="hero-box">
+    <h3>Safe • Secure • Confidential</h3>
+    <p>
+      Students can report incidents safely and responsibly.
+      Teachers can manage and monitor cases efficiently.
+    </p>
+  </div>
+</div>
+
+<!-- ABOUT -->
+<section>
+  <div class="section-title">
+    <h2>About SWDSMS</h2>
+    <p>A system designed for students and school administrators</p>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <h3>Student Reporting</h3>
+      <p>
+        Allows students to submit incident reports easily and securely.
+      </p>
+    </div>
+
+    <div class="card">
+      <h3>Teacher Monitoring</h3>
+      <p>
+        Teachers can review, track, and manage reported incidents.
+      </p>
+    </div>
+
+    <div class="card">
+      <h3>Safe Environment</h3>
+      <p>
+        Encourages accountability and promotes student welfare.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  © 2026 SWDSMS | Student Welfare & Discipline Monitoring System
+</footer>
+
+</body>
+</html>
+

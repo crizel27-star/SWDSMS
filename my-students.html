@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SWDSMS | My Students</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+/* ===== GENERAL ===== */
+*{box-sizing:border-box; font-family:'Poppins',sans-serif; transition:0.3s;}
+body{margin:0; display:flex; background:#f4f5fb; min-height:100vh;}
+
+/* ===== SIDEBAR ===== */
+#sidebar{
+  width:250px; background:white; height:100vh; padding:25px 20px;
+  box-shadow:2px 0 15px rgba(0,0,0,.05); display:flex; flex-direction:column;
+}
+#sidebar h2{color:#6366F1; margin-bottom:40px; font-size:24px; font-weight:600; text-align:center;}
+#sidebar a{display:flex; align-items:center; gap:10px; padding:12px 15px; color:#374151; text-decoration:none; border-radius:10px; margin-bottom:12px; font-size:15px;}
+#sidebar a i{min-width:20px; text-align:center;}
+#sidebar a.active, #sidebar a:hover{background:#6366F1; color:white;}
+
+/* ===== MAIN ===== */
+.main{flex:1; padding:30px 40px; overflow-x:hidden;}
+.main h1{color:#111827; margin-bottom:30px;}
+
+/* ===== STATS ===== */
+.stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:20px; margin-bottom:35px;}
+.stat{background:white; padding:25px 20px; border-radius:18px; box-shadow:0 10px 20px rgba(0,0,0,.08); text-align:center;}
+.stat p{margin:0; font-weight:500; color:#4b5563;}
+.stat span{display:block; font-size:32px; font-weight:600; color:#6366F1; margin-top:10px;}
+
+/* ===== TABLE CARD ===== */
+.table-card{background:white; padding:25px 30px; border-radius:20px; box-shadow:0 10px 25px rgba(0,0,0,.08);}
+.table-card h3{margin-top:0; margin-bottom:15px; color:#111827;}
+.table-card input{padding:12px 15px; border-radius:12px; border:1px solid #ddd; margin-bottom:20px; width:100%; max-width:300px;}
+
+table{width:100%; border-collapse:collapse;}
+th,td{padding:12px 15px; border-bottom:1px solid #e5e7eb; font-size:14px; text-align:left;}
+th{background:#f9fafb; font-weight:600; color:#4b5563;}
+tr:hover{background:#f3f4f6;}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:768px){
+  #sidebar{width:200px;}
+  .main{padding:20px 25px;}
+}
+@media(max-width:600px){
+  #sidebar{width:100%; height:auto; position:relative; flex-direction:row; overflow-x:auto; padding:15px;}
+  .main{padding:15px;}
+  .table-card input{max-width:100%;}
+}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div id="sidebar"></div>
+
+<!-- MAIN -->
+<div class="main">
+  <h1>My Students</h1>
+
+  <div class="stats">
+    <div class="stat">
+      <p>Total Students</p>
+      <span id="studentCount">0</span>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <h3>Student List</h3>
+    <input type="text" placeholder="Search student..." onkeyup="searchStudent(this.value)">
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Date Created</th>
+        </tr>
+      </thead>
+      <tbody id="studentTable"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://ukovklupzrarwpgcohwk.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVrb3ZrbHVwenJhcndwZ2NvaHdrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5ODQ4MzksImV4cCI6MjA4NjU2MDgzOX0.lVz9UC8btgycC_iPlZVNaxkIL4dZ1sM3sAP7P8kCf9E";
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let students = [];
+let currentUser = null;
+
+// ===== SIDEBAR =====
+const sidebarItems = {
+  teacher:[
+    {name:"Dashboard", icon:"fa-tachometer-alt", link:"teacher_dashboard.html"},
+    {name:"Submit Report", icon:"fa-file-alt", link:"submit-report.html"},
+    {name:"My Students", icon:"fa-users", link:"my-students.html", active:true},
+    {name:"Logout", icon:"fa-sign-out-alt", action:"logout"}
+  ]
+};
+
+function renderSidebar(){
+  const sidebar = document.getElementById("sidebar");
+  sidebar.innerHTML = `<h2>SWDSMS</h2>`;
+  sidebarItems.teacher.forEach(item=>{
+    const a = document.createElement("a");
+    a.href = item.link ? item.link : "#";
+    a.innerHTML = `<i class="fas ${item.icon}"></i> ${item.name}`;
+    if(item.active) a.classList.add("active");
+    if(item.action==="logout") a.onclick = e=>{e.preventDefault(); logout();};
+    sidebar.appendChild(a);
+  });
+}
+renderSidebar();
+
+function renderStudents(data){
+  const tbody = document.getElementById("studentTable");
+  tbody.innerHTML = "";
+  data.forEach(s=>{
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${s.name}</td><td>${s.email}</td><td>${s.date}</td>`;
+    tbody.appendChild(tr);
+  });
+  document.getElementById("studentCount").textContent = data.length;
+}
+
+function searchStudent(value){
+  const val = value.toLowerCase();
+  const filtered = students.filter(s =>
+    s.name.toLowerCase().includes(val) ||
+    s.email.toLowerCase().includes(val)
+  );
+  renderStudents(filtered);
+}
+
+function logout(){
+  supabaseClient.auth.signOut();
+  localStorage.removeItem("profile");
+  alert("Logging out...");
+  window.location.href = "login.html";
+}
+
+async function loadStudents(){
+  try {
+    const session = await supabaseClient.auth.getSession();
+    if (!session.data.session || !session.data.session.user) {
+      window.location.href = "login.html";
+      return;
+    }
+
+    currentUser = session.data.session.user;
+    const { data: profile, error: profileError } = await supabaseClient
+      .from("profiles")
+      .select("id, role")
+      .eq("id", currentUser.id)
+      .single();
+
+    if (profileError || !profile) {
+      alert("Profile not found. Please contact admin.");
+      window.location.href = "login.html";
+      return;
+    }
+
+    if (profile.role !== "teacher") {
+      window.location.href = "login.html";
+      return;
+    }
+
+    const { data: rows, error } = await supabaseClient
+      .from("profiles")
+      .select("first_name, last_name, email, role, created_at")
+      .eq("role", "student")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      alert(error.message || "Failed to load students.");
+      return;
+    }
+
+    students = (rows || []).map(s => ({
+      name: `${s.first_name} ${s.last_name}`.trim(),
+      email: s.email,
+      date: s.created_at
+    }));
+    renderStudents(students);
+  } catch (err) {
+    alert("Network error. Please try again.");
+  }
+}
+
+window.onload = loadStudents;
+</script>
+
+</body>
+</html>

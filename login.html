@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SWDSMS | Login</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+*{
+  box-sizing:border-box;
+  font-family:'Poppins',sans-serif;
+}
+body{
+  margin:0;
+  min-height:100vh;
+  background:#f4f5fb;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#111827;
+}
+
+/* CONTAINER */
+.login-container{
+  background:white;
+  width:100%;
+  max-width:420px;
+  padding:40px;
+  border-radius:20px;
+  box-shadow:0 20px 40px rgba(0,0,0,.12);
+}
+
+/* HEADER */
+.login-container h2{
+  text-align:center;
+  color:#6366F1;
+  margin-bottom:10px;
+}
+.login-container p{
+  text-align:center;
+  font-size:14px;
+  color:#6b7280;
+  margin-bottom:30px;
+}
+
+/* INPUTS */
+.form-group{
+  margin-bottom:18px;
+}
+.form-group label{
+  font-size:14px;
+  display:block;
+  margin-bottom:6px;
+}
+.form-group input,
+.form-group select{
+  width:100%;
+  padding:14px;
+  border-radius:12px;
+  border:1px solid #d1d5db;
+  font-size:14px;
+  background:white;
+}
+.form-group input:focus,
+.form-group select:focus{
+  outline:none;
+  border-color:#6366F1;
+}
+
+/* BUTTON */
+button{
+  width:100%;
+  padding:14px;
+  border:none;
+  border-radius:12px;
+  background:#6366F1;
+  color:white;
+  font-size:16px;
+  font-weight:500;
+  cursor:pointer;
+}
+button:hover{
+  opacity:.9;
+}
+
+/* LINKS */
+.links{
+  text-align:center;
+  margin-top:20px;
+  font-size:14px;
+}
+.links a{
+  color:#6366F1;
+  text-decoration:none;
+  font-weight:500;
+}
+
+/* MESSAGE */
+.message{
+  text-align:center;
+  font-size:14px;
+  margin-top:15px;
+}
+.success{ color:green; }
+.error{ color:red; }
+</style>
+</head>
+<body>
+
+<div class="login-container">
+  <h2>SWDSMS Login</h2>
+  <p>Student Welfare & Discipline Monitoring System</p>
+
+  <form id="loginForm">
+
+    <!-- ROLE (OPTIONAL / NOT REQUIRED) -->
+    <div class="form-group">
+      <label for="role">Role (optional)</label>
+      <select id="role">
+        <option value="">Select role</option>
+        <option value="student">Student</option>
+        <option value="teacher">Teacher</option>
+        <option value="admin">Admin</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="email">Email</label>
+      <input type="email" id="email" placeholder="Enter your email">
+    </div>
+
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input type="password" id="password" placeholder="Enter your password">
+    </div>
+
+    <button type="submit">Login</button>
+  </form>
+
+  <div class="message" id="message"></div>
+
+  <div class="links">
+    First time here?
+    <a href="signup.html">Create an account</a>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://ukovklupzrarwpgcohwk.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVrb3ZrbHVwenJhcndwZ2NvaHdrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5ODQ4MzksImV4cCI6MjA4NjU2MDgzOX0.lVz9UC8btgycC_iPlZVNaxkIL4dZ1sM3sAP7P8kCf9E";
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const form = document.getElementById("loginForm");
+const message = document.getElementById("message");
+
+form.addEventListener("submit", async function(e){
+  e.preventDefault();
+
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value.trim();
+  const role = document.getElementById("role").value;
+
+  if(email === "" || password === ""){
+    message.textContent = "Please enter email and password.";
+    message.className = "message error";
+    return;
+  }
+
+  message.textContent = "Signing in...";
+  message.className = "message";
+
+  try {
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (error) {
+      message.textContent = error.message || "Login failed.";
+      message.className = "message error";
+      return;
+    }
+
+    const userId = data.user.id;
+    let { data: profile, error: profileError } = await supabaseClient
+      .from("profiles")
+      .select("id, first_name, last_name, email, role")
+      .eq("id", userId)
+      .single();
+
+    if (profileError || !profile) {
+      const meta = data.user.user_metadata || {};
+      if (meta.role && meta.first_name && meta.last_name) {
+        const { data: created, error: createError } = await supabaseClient
+          .from("profiles")
+          .insert([
+            {
+              id: userId,
+              first_name: meta.first_name,
+              last_name: meta.last_name,
+              email: meta.email || data.user.email,
+              role: meta.role
+            }
+          ])
+          .select("id, first_name, last_name, email, role")
+          .single();
+
+        if (createError || !created) {
+          message.textContent = "Profile not found. Please contact admin.";
+          message.className = "message error";
+          return;
+        }
+
+        profile = created;
+      } else {
+        message.textContent = "Profile not found. Please contact admin.";
+        message.className = "message error";
+        return;
+      }
+    }
+
+    if (role && role !== profile.role) {
+      message.textContent = "Role does not match this account.";
+      message.className = "message error";
+      return;
+    }
+
+    localStorage.setItem("profile", JSON.stringify(profile));
+
+    message.textContent = "Login successful. Welcome!";
+    message.className = "message success";
+
+    setTimeout(()=>{
+      if(profile.role === "teacher") window.location.href = "teacher_dashboard.html";
+      else if(profile.role === "admin") window.location.href = "admin_dashboard.html";
+      else window.location.href = "student_dashboard.html";
+    }, 800);
+  } catch (err) {
+    message.textContent = "Network error. Please try again.";
+    message.className = "message error";
+  }
+});
+</script>
+
+</body>
+</html>

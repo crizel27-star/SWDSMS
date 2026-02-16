@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SWDSMS | Sign Up</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+*{
+  box-sizing:border-box;
+  font-family:'Poppins',sans-serif;
+}
+body{
+  margin:0;
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:#eef2ff;
+}
+
+/* CARD */
+.card{
+  background:white;
+  width:380px;
+  padding:30px 25px;
+  border-radius:20px;
+  border:3px solid #6366F1;
+}
+
+/* TITLE */
+h2{
+  text-align:center;
+  margin-bottom:25px;
+  font-weight:600;
+}
+
+/* INPUTS */
+input, select{
+  width:100%;
+  padding:14px;
+  margin-bottom:15px;
+  border-radius:12px;
+  border:1px solid #ddd;
+  font-size:14px;
+}
+input:focus, select:focus{
+  outline:none;
+  border-color:#6366F1;
+}
+
+/* PASSWORD */
+.password-wrapper{
+  position:relative;
+}
+.password-toggle{
+  position:absolute;
+  right:14px;
+  top:50%;
+  transform:translateY(-50%);
+  cursor:pointer;
+  font-size:16px;
+}
+
+/* PASSWORD NOTE */
+.password-note{
+  font-size:12px;
+  color:#666;
+  margin-bottom:15px;
+  padding:10px;
+  background:#f3f4f6;
+  border-radius:8px;
+  line-height:1.6;
+}
+
+/* BUTTON */
+button{
+  width:100%;
+  padding:14px;
+  background:#6366F1;
+  border:none;
+  border-radius:12px;
+  color:white;
+  font-size:15px;
+  font-weight:500;
+  cursor:pointer;
+  margin-top:10px;
+}
+button:hover{
+  background:#4f46e5;
+}
+
+/* LINK */
+.link{
+  text-align:center;
+  margin-top:15px;
+  font-size:14px;
+}
+.link a{
+  color:#6366F1;
+  text-decoration:none;
+  font-weight:500;
+}
+
+/* ACCESSIBILITY */
+.sr-only{
+  position:absolute;
+  width:1px;
+  height:1px;
+  padding:0;
+  margin:-1px;
+  overflow:hidden;
+  clip:rect(0,0,0,0);
+  white-space:nowrap;
+  border:0;
+}
+</style>
+</head>
+<body>
+
+<div class="card">
+  <h2>Sign Up</h2>
+
+  <form id="signupForm">
+    <label class="sr-only" for="firstName">First Name</label>
+    <input type="text" id="firstName" placeholder="First Name" autocomplete="given-name" required>
+
+    <label class="sr-only" for="lastName">Last Name</label>
+    <input type="text" id="lastName" placeholder="Last Name" autocomplete="family-name" required>
+
+    <label class="sr-only" for="email">Email</label>
+    <input type="email" id="email" placeholder="Email" autocomplete="email" required>
+
+    <label class="sr-only" for="password">Password</label>
+    <div class="password-wrapper">
+      <input type="password" id="password" placeholder="Password" required>
+      <span class="password-toggle" onclick="togglePassword()">👁️</span>
+    </div>
+
+    <label class="sr-only" for="confirmPassword">Confirm Password</label>
+    <div class="password-wrapper">
+      <input type="password" id="confirmPassword" placeholder="Confirm Password" required>
+      <span class="password-toggle" onclick="toggleConfirm()">👁️</span>
+    </div>
+
+    <!-- ROLE SELECT -->
+    <label class="sr-only" for="role">Role</label>
+    <select id="role" required>
+      <option value="">-- Select Role --</option>
+      <option value="student">Student</option>
+      <option value="teacher">Teacher</option>
+      <option value="admin">Admin</option>
+    </select>
+
+    <!-- PASSWORD NOTE -->
+    <p class="password-note">
+      <strong>Password Requirements:</strong><br/>
+      • Minimum 6 characters<br/>
+      • At least 1 uppercase letter (A-Z)<br/>
+      • At least 1 lowercase letter (a-z)<br/>
+      • At least 1 number (0-9)
+    </p>
+
+    <button type="submit">Sign Up</button>
+  </form>
+
+  <div class="link">
+    Already have an account?
+    <a href="login.html">log in</a>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://ukovklupzrarwpgcohwk.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVrb3ZrbHVwenJhcndwZ2NvaHdrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5ODQ4MzksImV4cCI6MjA4NjU2MDgzOX0.lVz9UC8btgycC_iPlZVNaxkIL4dZ1sM3sAP7P8kCf9E";
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+function togglePassword(){
+  const pass = document.getElementById("password");
+  const icons = document.querySelectorAll(".password-toggle");
+
+  if(pass.type === "password"){
+    pass.type = "text";
+    icons[0].textContent = "🙈";
+  }else{
+    pass.type = "password";
+    icons[0].textContent = "👁️";
+  }
+}
+
+function toggleConfirm(){
+  const pass = document.getElementById("confirmPassword");
+  const icons = document.querySelectorAll(".password-toggle");
+
+  if(pass.type === "password"){
+    pass.type = "text";
+    icons[1].textContent = "🙈";
+  }else{
+    pass.type = "password";
+    icons[1].textContent = "👁️";
+  }
+}
+
+document.getElementById("signupForm").addEventListener("submit", async function(e){
+  e.preventDefault();
+
+  const first = document.getElementById("firstName").value.trim();
+  const last = document.getElementById("lastName").value.trim();
+  const email = document.getElementById("email").value.trim();
+  const pass = document.getElementById("password").value;
+  const confirm = document.getElementById("confirmPassword").value;
+  const role = document.getElementById("role").value;
+
+  if(!first || !last || !email || !pass || !confirm || !role){
+    Swal.fire("Error","Please fill in all fields.","error");
+    return;
+  }
+
+  if(pass.length < 6 || !/[A-Z]/.test(pass) || !/[a-z]/.test(pass) || !/\d/.test(pass)){
+    Swal.fire("Error","Password does not meet requirements.","error");
+    return;
+  }
+
+  if(pass !== confirm){
+    Swal.fire("Error","Passwords do not match.","error");
+    return;
+  }
+
+  try {
+    const { data, error } = await supabaseClient.auth.signUp({
+      email,
+      password: pass,
+      options: {
+        data: {
+          first_name: first,
+          last_name: last,
+          role: role,
+          email: email
+        }
+      }
+    });
+
+    if (error) {
+      Swal.fire("Error", error.message || "Signup failed.", "error");
+      return;
+    }
+
+    if (!data.user) {
+      Swal.fire("Error", "Signup succeeded, but user data is missing.", "error");
+      return;
+    }
+
+    const userId = data.user.id;
+    const { error: profileError } = await supabaseClient
+      .from("profiles")
+      .insert([
+        {
+          id: userId,
+          first_name: first,
+          last_name: last,
+          email: email,
+          role: role
+        }
+      ]);
+
+    if (profileError) {
+      Swal.fire("Error", profileError.message || "Profile creation failed.", "error");
+      return;
+    }
+
+    localStorage.setItem("profile", JSON.stringify({
+      id: userId,
+      first_name: first,
+      last_name: last,
+      email: email,
+      role: role
+    }));
+
+    Swal.fire({
+      icon:"success",
+      title:"Welcome!",
+      text:`Hello ${first} (${role}), signup successful!`,
+      timer:1200,
+      showConfirmButton:false
+    });
+
+    setTimeout(()=>{
+      if(role === "teacher") window.location.href = "teacher_dashboard.html";
+      else if(role === "admin") window.location.href = "admin_dashboard.html";
+      else window.location.href = "student_dashboard.html";
+    },1200);
+  } catch (err) {
+    Swal.fire("Error", "Network error. Please try again.", "error");
+  }
+});
+</script>
+
+</body>
+</html>

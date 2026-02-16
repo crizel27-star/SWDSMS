@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SWDSMS | Submit Incident Report</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  /* ====== GENERAL ====== */
+  * { box-sizing: border-box; font-family: 'Poppins', sans-serif; transition: 0.3s; }
+  body { margin:0; display:flex; justify-content:center; align-items:flex-start; min-height:100vh; background:#f4f5fb; padding-top:50px; }
+
+  /* ====== BACK BUTTON ====== */
+  #back-btn {
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    background: #6366F1;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+  }
+  #back-btn:hover { background:#4f46e5; }
+  #back-btn i { color:white; font-size:18px; }
+
+  /* ====== CARD ====== */
+  .report-card {
+    background:white;
+    padding:30px 35px;
+    border-radius:20px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.08);
+    max-width:500px;
+    width:100%;
+  }
+  .report-card h2 { text-align:center; color:#111827; margin-bottom:25px; font-size:24px; }
+  label { display:block; font-size:14px; margin-top:15px; margin-bottom:5px; color:#111827; font-weight:500; }
+  input, select, textarea, button {
+    width:100%;
+    padding:12px 15px;
+    border-radius:12px;
+    border:1px solid #ddd;
+    font-size:14px;
+    outline:none;
+    box-sizing:border-box;
+  }
+  input:focus, select:focus, textarea:focus { border-color:#6366F1; box-shadow:0 0 5px rgba(99,102,241,0.3); }
+  textarea { resize:none; height:100px; font-family:'Poppins',sans-serif; }
+  
+  button.submit {
+    margin-top:15px;
+    background:#6366F1;
+    color:white;
+    font-size:16px;
+    font-weight:500;
+    border:none;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+  }
+  button.submit:hover { background:#4f46e5; }
+  button.submit:disabled { background:#ccc; cursor:not-allowed; }
+  
+  #success-msg {
+    display:none;
+    margin-top:15px;
+    padding:12px;
+    background:#34D399;
+    color:white;
+    border-radius:12px;
+    text-align:center;
+    font-weight:500;
+  }
+
+  @media (max-width:600px){
+    body{padding-top:60px;}
+    #back-btn{top:10px; left:10px;}
+    .report-card{padding:20px;}
+  }
+</style>
+</head>
+<body>
+
+<!-- Back Button -->
+<button id="back-btn" onclick="goBack()" aria-label="Go back" title="Go back">
+  <i class="fas fa-arrow-left"></i>
+</button>
+
+<div class="report-card">
+  <h2>Report an Incident</h2>
+  <form id="incident-form">
+    <label for="student_name">Name</label>
+    <input type="text" id="student_name" placeholder="Enter your name" required>
+
+    <label for="grade_section">Grade / Section</label>
+    <input type="text" id="grade_section" placeholder="e.g. 10-B" required>
+
+    <label for="incident_type">Incident Type</label>
+    <select id="incident_type" required>
+      <option value="">Select type</option>
+      <option>Bullying</option>
+      <option>Language Abuse</option>
+      <option>Digital Misuse</option>
+      <option>Other</option>
+    </select>
+
+    <label for="description">Description</label>
+    <textarea id="description" placeholder="Describe the incident..." required></textarea>
+
+    <label for="incident_date">Date of Incident</label>
+    <input type="date" id="incident_date" required>
+
+    <button type="submit" class="submit" id="submit-btn">
+      <i class="fas fa-paper-plane"></i> Submit Report
+    </button>
+
+    <div id="success-msg">Incident report submitted successfully!</div>
+  </form>
+</div>
+
+<script>
+  const SUPABASE_URL = "https://ukovklupzrarwpgcohwk.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVrb3ZrbHVwenJhcndwZ2NvaHdrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5ODQ4MzksImV4cCI6MjA4NjU2MDgzOX0.lVz9UC8btgycC_iPlZVNaxkIL4dZ1sM3sAP7P8kCf9E";
+  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  function goBack() {
+    window.history.back(); // Go back to previous page
+  }
+  const incidentForm = document.getElementById("incident-form");
+  const successMsg = document.getElementById("success-msg");
+  const submitBtn = document.getElementById("submit-btn");
+  const nameInput = document.getElementById("student_name");
+  let currentUser = null;
+  let currentProfile = null;
+
+  async function loadSession(){
+    const { data } = await supabaseClient.auth.getSession();
+    if (!data.session || !data.session.user) {
+      window.location.href = "login.html";
+      return;
+    }
+
+    currentUser = data.session.user;
+    const { data: profile, error } = await supabaseClient
+      .from("profiles")
+      .select("id, first_name, last_name, role")
+      .eq("id", currentUser.id)
+      .single();
+
+    if (error || !profile) {
+      alert("Profile not found. Please contact admin.");
+      window.location.href = "login.html";
+      return;
+    }
+
+    if (profile.role !== "student") {
+      alert("Only students can submit reports.");
+      window.location.href = "login.html";
+      return;
+    }
+
+    currentProfile = profile;
+    nameInput.value = `${profile.first_name} ${profile.last_name}`.trim();
+  }
+
+  loadSession();
+
+  incidentForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const name = document.getElementById("student_name").value.trim();
+    const gradeSection = document.getElementById("grade_section").value.trim();
+    const incidentType = document.getElementById("incident_type").value.trim();
+    const description = document.getElementById("description").value.trim();
+    const incidentDate = document.getElementById("incident_date").value;
+
+    if (!name || !gradeSection || !incidentType || !description || !incidentDate) {
+      alert("Please fill all fields");
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = "Submitting...";
+
+    try {
+      const { error } = await supabaseClient
+        .from("incidents")
+        .insert([
+          {
+            student_id: currentUser.id,
+            student_name: name,
+            grade_section: gradeSection,
+            incident_type: incidentType,
+            description: description,
+            incident_date: incidentDate,
+            status: "Pending"
+          }
+        ]);
+
+      if (error) {
+        alert(error.message || "Error submitting report.");
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Report';
+        return;
+      }
+
+      successMsg.style.display = "block";
+      incidentForm.reset();
+      if (currentProfile) {
+        nameInput.value = `${currentProfile.first_name} ${currentProfile.last_name}`.trim();
+      }
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Report';
+      setTimeout(() => { successMsg.style.display = "none"; }, 2000);
+    } catch (err) {
+      alert("Network error. Please try again.");
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Report';
+    }
+  });
+</script>
+
+</body>
+</html>

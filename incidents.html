@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SWDSMS | Incidents</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+*{
+  box-sizing:border-box;
+  font-family:'Poppins',sans-serif;
+}
+
+body{
+  margin:0;
+  display:flex;
+  background:#f4f5fb;
+}
+
+/* ================= SIDEBAR ================= */
+.sidebar{
+  width:250px;
+  height:100vh;
+  background:#fff;
+  padding:25px 20px;
+  position:fixed;
+  box-shadow:2px 0 15px rgba(0,0,0,0.05);
+}
+
+.sidebar h2{
+  text-align:center;
+  color:#6366F1;
+  margin-bottom:40px;
+}
+
+.sidebar a{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:12px 15px;
+  text-decoration:none;
+  color:#374151;
+  border-radius:10px;
+  margin-bottom:12px;
+}
+
+.sidebar a:hover,
+.sidebar a.active{
+  background:#6366F1;
+  color:#fff;
+}
+
+/* ================= MAIN ================= */
+.main{
+  margin-left:250px;
+  padding:30px 40px;
+  width:100%;
+}
+
+/* ================= TOP BAR ================= */
+.top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:30px;
+}
+
+.top h1{
+  font-size:24px;
+}
+
+.top button{
+  background:#6366F1;
+  color:#fff;
+  border:none;
+  padding:10px 18px;
+  border-radius:12px;
+  cursor:pointer;
+}
+
+.top button:hover{
+  background:#4f46e5;
+}
+
+/* ================= TABLE ================= */
+.table-card{
+  background:#fff;
+  padding:25px 30px;
+  border-radius:20px;
+  box-shadow:0 10px 25px rgba(0,0,0,0.08);
+  overflow-x:auto;
+}
+
+.table-card h3{
+  margin-top:0;
+}
+
+.table-card input{
+  width:300px;
+  max-width:100%;
+  padding:12px;
+  border-radius:12px;
+  border:1px solid #ddd;
+  margin-bottom:20px;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+
+th,td{
+  padding:12px;
+  border-bottom:1px solid #e5e7eb;
+  font-size:14px;
+  text-align:left;
+  vertical-align:top;
+}
+
+th{
+  background:#f9fafb;
+}
+
+tbody tr:hover{
+  background:#f3f4f6;
+}
+
+/* ================= FOOTER ================= */
+.footer{
+  text-align:center;
+  margin-top:40px;
+  font-size:12px;
+  color:#9ca3af;
+}
+
+/* ================= RESPONSIVE ================= */
+@media(max-width:768px){
+  .sidebar{
+    width:200px;
+  }
+  .main{
+    margin-left:200px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <h2>SWDSMS</h2>
+  <a href="admin_dashboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+  <a href="users.html"><i class="fas fa-users"></i> Users</a>
+  <a class="active" href="incidents.html"><i class="fas fa-file-alt"></i> Incidents</a>
+  <a href="#"><i class="fas fa-cog"></i> Settings</a>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="top">
+    <h1>Incident Reports</h1>
+    <button onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+  </div>
+
+  <div class="table-card">
+    <h3>Submitted Reports</h3>
+    <input type="text" placeholder="Search report..." onkeyup="searchReport(this.value)">
+    <table>
+      <thead>
+        <tr>
+          <th>Student</th>
+          <th>Grade / Section</th>
+          <th>Type</th>
+          <th>Incident Date</th>
+          <th>Status</th>
+          <th>Description</th>
+          <th>Submitted</th>
+        </tr>
+      </thead>
+      <tbody id="incidentTable"></tbody>
+    </table>
+  </div>
+
+  <div class="footer">
+    © 2026 SWDSMS Admin Panel
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://ukovklupzrarwpgcohwk.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVrb3ZrbHVwenJhcndwZ2NvaHdrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5ODQ4MzksImV4cCI6MjA4NjU2MDgzOX0.lVz9UC8btgycC_iPlZVNaxkIL4dZ1sM3sAP7P8kCf9E";
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let incidents = [];
+let currentUser = null;
+
+function formatDate(value){
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString();
+}
+
+function formatDateTime(value){
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString();
+}
+
+/* ================= LOAD DATA ================= */
+function renderIncidents(){
+  const tbody = document.getElementById("incidentTable");
+  tbody.innerHTML = "";
+
+  incidents.forEach(item=>{
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${item.student_name}</td>
+      <td>${item.grade_section}</td>
+      <td>${item.incident_type}</td>
+      <td>${item.incident_date}</td>
+      <td>${item.status}</td>
+      <td>${item.description}</td>
+      <td>${item.created_at}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+/* ================= SEARCH ================= */
+function searchReport(value){
+  value = value.toLowerCase();
+  document.querySelectorAll("#incidentTable tr").forEach(row=>{
+    row.style.display = row.innerText.toLowerCase().includes(value) ? "" : "none";
+  });
+}
+
+/* ================= LOGOUT ================= */
+function logout(){
+  supabaseClient.auth.signOut();
+  localStorage.removeItem("profile");
+  alert("Logged out!");
+  window.location.href = "login.html";
+}
+
+async function fetchIncidents(){
+  try {
+    const session = await supabaseClient.auth.getSession();
+    if (!session.data.session || !session.data.session.user) {
+      window.location.href = "login.html";
+      return;
+    }
+
+    currentUser = session.data.session.user;
+    const { data: profile, error: profileError } = await supabaseClient
+      .from("profiles")
+      .select("id, role")
+      .eq("id", currentUser.id)
+      .single();
+
+    if (profileError || !profile) {
+      alert("Profile not found. Please contact admin.");
+      window.location.href = "login.html";
+      return;
+    }
+
+    if (profile.role !== "admin") {
+      window.location.href = "login.html";
+      return;
+    }
+
+    const { data: incidentRows, error } = await supabaseClient
+      .from("incidents")
+      .select("student_name, grade_section, incident_type, incident_date, status, description, created_at")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      alert(error.message || "Failed to load incidents.");
+      return;
+    }
+
+    incidents = (incidentRows || []).map(row => ({
+      student_name: row.student_name,
+      grade_section: row.grade_section,
+      incident_type: row.incident_type,
+      incident_date: formatDate(row.incident_date),
+      status: row.status,
+      description: row.description,
+      created_at: formatDateTime(row.created_at)
+    }));
+
+    renderIncidents();
+  } catch (err) {
+    alert("Network error. Please try again.");
+  }
+}
+
+window.onload = fetchIncidents;
+</script>
+
+</body>
+</html>
